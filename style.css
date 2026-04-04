@@ -269,6 +269,8 @@ nav {
     color: var(--text-main);
     margin-bottom: 20px;
     letter-spacing: 2px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
 }
 
 .group-photo {
