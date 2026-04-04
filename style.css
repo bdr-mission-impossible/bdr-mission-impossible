@@ -281,6 +281,18 @@ nav {
     box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 
+.pole-title {
+    font-size: 1.8rem;
+    color: var(--red-accent);
+    margin-top: 50px;
+    margin-bottom: 30px;
+    text-align: left;
+    border-bottom: 2px solid var(--dark-grey);
+    padding-bottom: 10px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+}
+
 .team-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
