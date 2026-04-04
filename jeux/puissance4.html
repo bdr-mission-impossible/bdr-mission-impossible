@@ -10,10 +10,18 @@
         header { text-align: center; margin-bottom: 5px; width:100%;}
         .btn-retour { display: inline-block; color: #fff; text-decoration: none; padding: 5px 10px; border: 1px solid #8a0000; border-radius: 4px; font-size:0.9rem;}
         h1 { color: #d30000; margin-top: 10px; font-size: 1.8rem; margin-bottom:5px;}
+        
+        .difficulty-selector { margin: 10px 0; }
+        .diff-btn { background: #333; color: #fff; border: 1px solid #555; padding: 5px 15px; cursor: pointer; font-family: 'Oswald', sans-serif; border-radius: 4px; transition: 0.3s; margin: 0 5px;}
+        .diff-btn.active { background: #d30000; border-color: #d30000; }
+        
         #grid { display: grid; grid-template-columns: repeat(7, 40px); gap: 5px; background: #222; padding: 10px; border-radius: 8px; border: 2px solid #8a0000; box-shadow: 0 0 20px rgba(211,0,0,0.2); touch-action:manipulation;}
         .cell { width: 40px; height: 40px; background: #0d0d0d; border-radius: 50%; cursor: pointer; transition: background 0.3s;}
-        .cell.p1 { background: #d30000; box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 10px #ff0000; }
-        .cell.p2 { background: #f2f2f2; box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 10px #ffffff; }
+        
+        /* Luminosité nettement diminuée */
+        .cell.p1 { background: #d30000; box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 0 3px #ff3333; }
+        .cell.p2 { background: #ebebeb; box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 0 3px #ffffff; }
+        
         .status { margin-top: 15px; font-size: 1.2rem; margin-bottom:10px; }
         .btn-action { background: #8a0000; color: #fff; border: none; padding: 10px 20px; font-family: 'Oswald', sans-serif; font-size: 1rem; cursor: pointer; border-radius: 4px; margin-top: 10px;}
         @media (max-width: 400px) { #grid { grid-template-columns: repeat(7, 35px); gap:4px; } .cell { width: 35px; height: 35px; } }
@@ -23,28 +31,42 @@
     <header>
         <a href="../index.html#arcade" class="btn-retour">⬅ RETOUR AU QG</a>
         <h1>HACKING MAINFRAME</h1>
+        <div class="difficulty-selector">
+            <button class="diff-btn active" onclick="setDiff('facile')">FACILE</button>
+            <button class="diff-btn" onclick="setDiff('moyen')">MOYEN</button>
+            <button class="diff-btn" onclick="setDiff('difficile')">DIFFICILE</button>
+        </div>
         <div class="status" id="statusMsg">À toi de jouer (Agent Rouge)</div>
     </header>
     <div id="grid"></div>
-    <button class="btn-action hidden" id="resetBtn" onclick="init()">REFAIRE UN HACK</button>
+    <button class="btn-action hidden" id="resetBtn" onclick="init()">NOUVELLE INTRUSION</button>
     <script>
         const gridEl = document.getElementById('grid');
         const statusMsg = document.getElementById('statusMsg');
         const resetBtn = document.getElementById('resetBtn');
         const rows = 6, cols = 7;
         let board = [], currentPlayer = 1, gameover = false;
+        let difficulty = 'facile';
+
+        function setDiff(lvl) {
+            difficulty = lvl;
+            document.querySelectorAll('.diff-btn').forEach(b => {
+                b.classList.remove('active');
+                if(b.innerText.toLowerCase() === lvl) b.classList.add('active');
+            });
+            if(board.length > 0 && !gameover) init();
+        }
 
         function init() {
             gridEl.innerHTML = '';
-            board = []; gameover = false; currentPlayer = 1;
+            board = Array.from({length: rows}, () => Array(cols).fill(0));
+            gameover = false; currentPlayer = 1;
             statusMsg.innerText = "À toi de jouer (Agent Rouge)";
             statusMsg.style.color = "#d30000";
             resetBtn.style.display = 'none';
             
             for(let r=0; r<rows; r++) {
-                board[r] = [];
                 for(let c=0; c<cols; c++) {
-                    board[r][c] = 0;
                     let cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.dataset.r = r; cell.dataset.c = c;
@@ -60,17 +82,24 @@
                 if(board[r][c] === 0) {
                     board[r][c] = currentPlayer;
                     updateGrid();
-                    if(checkWin(r, c)) {
+                    if(checkWin(board, currentPlayer)) {
                         gameover = true;
                         statusMsg.innerText = currentPlayer === 1 ? "ACCÈS ACCORDÉ !" : "SYSTÈME VERROUILLÉ";
                         statusMsg.style.color = currentPlayer === 1 ? "#d30000" : "#fff";
                         resetBtn.style.display = 'block';
                         return;
                     }
+                    if(isTie(board)) {
+                        gameover = true;
+                        statusMsg.innerText = "ACCÈS BLOQUÉ (ÉGALITÉ)";
+                        resetBtn.style.display = 'block';
+                        return;
+                    }
+
                     currentPlayer = currentPlayer === 1 ? 2 : 1;
                     if(currentPlayer === 2) {
-                        statusMsg.innerText = "L'IA réfléchit..."; statusMsg.style.color = "#fff";
-                        setTimeout(iaPlay, 500);
+                        statusMsg.innerText = `L'IA réfléchit...`; statusMsg.style.color = "#fff";
+                        setTimeout(iaPlay, 300);
                     } else {
                         statusMsg.innerText = "À toi de jouer (Agent Rouge)"; statusMsg.style.color = "#d30000";
                     }
@@ -79,14 +108,163 @@
             }
         }
 
+        function isTie(b) {
+            for(let c=0; c<cols; c++) if(b[0][c] === 0) return false;
+            return true;
+        }
+
         function iaPlay() {
             if(gameover) return;
-            let available = [];
-            for(let c=0; c<cols; c++) if(board[0][c] === 0) available.push(c);
-            if(available.length > 0) {
-                // Simple random AI
-                let randomC = available[Math.floor(Math.random() * available.length)];
-                drop(randomC);
+            let available = getValidLocations(board);
+            if(available.length === 0) return;
+
+            let choice = available[0];
+
+            if(difficulty === 'facile') {
+                choice = available[Math.floor(Math.random() * available.length)];
+            } 
+            else if (difficulty === 'moyen') {
+                // Essayer de gagner
+                let winMove = findWinMove(board, 2, available);
+                // Bloquer le joueur
+                let blockMove = findWinMove(board, 1, available);
+                if (winMove !== -1) choice = winMove;
+                else if (blockMove !== -1) choice = blockMove;
+                else choice = available[Math.floor(Math.random() * available.length)];
+            }
+            else if (difficulty === 'difficile') {
+                // Minimax au lieu de random (Depth 5) - Temps de réponse raisonnable en JS natif
+                let tempBoard = board.map(arr => [...arr]);
+                let bestMove = minimax(tempBoard, 5, -Infinity, Infinity, true);
+                if(bestMove.column !== -1 && available.includes(bestMove.column)) choice = bestMove.column;
+                else choice = available[Math.floor(Math.random() * available.length)];
+            }
+            drop(choice);
+        }
+
+        function getValidLocations(b) {
+            let valid = [];
+            for(let c=0; c<cols; c++) if(b[0][c] === 0) valid.push(c);
+            return valid;
+        }
+
+        function getNextRow(b, c) {
+            for(let r=rows-1; r>=0; r--) if(b[r][c] === 0) return r;
+            return -1;
+        }
+
+        function findWinMove(b, p, valid_cols) {
+            for(let c of valid_cols) {
+                let r = getNextRow(b, c);
+                let tempBoard = b.map(arr => [...arr]);
+                tempBoard[r][c] = p;
+                if(checkWin(tempBoard, p)) return c;
+            }
+            return -1;
+        }
+
+        function scorePosition(b, piece) {
+            let score = 0;
+            let oppPiece = piece === 1 ? 2 : 1;
+            
+            // Core Center priority
+            let centerArray = [];
+            for(let r=0; r<rows; r++) centerArray.push(b[r][Math.floor(cols/2)]);
+            score += centerArray.filter(v => v === piece).length * 4;
+
+            // Horizontal
+            for(let r=0; r<rows; r++) {
+                let rowArray = b[r];
+                for(let c=0; c<cols-3; c++) {
+                    let window = rowArray.slice(c, c+4);
+                    score += evaluateWindow(window, piece, oppPiece);
+                }
+            }
+            // Vertical
+            for(let c=0; c<cols; c++) {
+                let colArray = [];
+                for(let r=0; r<rows; r++) colArray.push(b[r][c]);
+                for(let r=0; r<rows-3; r++) {
+                    let window = colArray.slice(r, r+4);
+                    score += evaluateWindow(window, piece, oppPiece);
+                }
+            }
+            // Diagonales (pos)
+            for(let r=0; r<rows-3; r++) {
+                for(let c=0; c<cols-3; c++) {
+                    let window = [b[r][c], b[r+1][c+1], b[r+2][c+2], b[r+3][c+3]];
+                    score += evaluateWindow(window, piece, oppPiece);
+                }
+            }
+            // Diagonales (neg)
+            for(let r=0; r<rows-3; r++) {
+                for(let c=0; c<cols-3; c++) {
+                    let window = [b[r+3][c], b[r+2][c+1], b[r+1][c+2], b[r][c+3]];
+                    score += evaluateWindow(window, piece, oppPiece);
+                }
+            }
+            return score;
+        }
+
+        function evaluateWindow(window, piece, oppPiece) {
+            let score = 0;
+            let p_count = window.filter(v => v === piece).length;
+            let empty_count = window.filter(v => v === 0).length;
+            let o_count = window.filter(v => v === oppPiece).length;
+
+            if(p_count === 4) score += 100;
+            else if(p_count === 3 && empty_count === 1) score += 5;
+            else if(p_count === 2 && empty_count === 2) score += 2;
+
+            if(o_count === 3 && empty_count === 1) score -= 4;
+
+            return score;
+        }
+
+        function isTerminalNode(b) {
+            return checkWin(b, 1) || checkWin(b, 2) || getValidLocations(b).length === 0;
+        }
+
+        // Algorithme Minimax
+        function minimax(b, depth, alpha, beta, maximizingPlayer) {
+            let valid_locations = getValidLocations(b);
+            let isTerminal = isTerminalNode(b);
+            if(depth === 0 || isTerminal) {
+                if(isTerminal) {
+                    if(checkWin(b, 2)) return {column: null, score: 10000000};
+                    else if(checkWin(b, 1)) return {column: null, score: -10000000};
+                    else return {column: null, score: 0};
+                } else {
+                    return {column: null, score: scorePosition(b, 2)};
+                }
+            }
+            
+            if(maximizingPlayer) {
+                let value = -Infinity;
+                let column = valid_locations[Math.floor(Math.random() * valid_locations.length)];
+                for(let c of valid_locations) {
+                    let r = getNextRow(b, c);
+                    let tempBoard = b.map(arr => [...arr]);
+                    tempBoard[r][c] = 2; // IA est joueur 2
+                    let newScore = minimax(tempBoard, depth-1, alpha, beta, false).score;
+                    if(newScore > value) { value = newScore; column = c; }
+                    alpha = Math.max(alpha, value);
+                    if(alpha >= beta) break; // Alpha-beta pruning
+                }
+                return {column: column, score: value};
+            } else { // Minimizing (Agent Rouge)
+                let value = Infinity;
+                let column = valid_locations[Math.floor(Math.random() * valid_locations.length)];
+                for(let c of valid_locations) {
+                    let r = getNextRow(b, c);
+                    let tempBoard = b.map(arr => [...arr]);
+                    tempBoard[r][c] = 1;
+                    let newScore = minimax(tempBoard, depth-1, alpha, beta, true).score;
+                    if(newScore < value) { value = newScore; column = c; }
+                    beta = Math.min(beta, value);
+                    if(alpha >= beta) break;
+                }
+                return {column: column, score: value};
             }
         }
 
@@ -102,21 +280,28 @@
             }
         }
 
-        function checkWin(r, c) {
-            return checkLine(r, c, 1, 0) || checkLine(r, c, 0, 1) || checkLine(r, c, 1, 1) || checkLine(r, c, 1, -1);
-        }
-        function checkLine(r, c, dr, dc) {
-            let count = 1, p = board[r][c];
-            for(let i=1; i<4; i++) {
-                if(r+dr*i >= 0 && r+dr*i < rows && c+dc*i >= 0 && c+dc*i < cols && board[r+dr*i][c+dc*i] === p) count++; else break;
+        function checkWin(b, p) {
+            // Horizontal
+            for(let c=0; c<cols-3; c++) for(let r=0; r<rows; r++) {
+                if(b[r][c]===p && b[r][c+1]===p && b[r][c+2]===p && b[r][c+3]===p) return true;
             }
-            for(let i=1; i<4; i++) {
-                if(r-dr*i >= 0 && r-dr*i < rows && c-dc*i >= 0 && c-dc*i < cols && board[r-dr*i][c-dc*i] === p) count++; else break;
+            // Vertical
+            for(let c=0; c<cols; c++) for(let r=0; r<rows-3; r++) {
+                if(b[r][c]===p && b[r+1][c]===p && b[r+2][c]===p && b[r+3][c]===p) return true;
             }
-            return count >= 4;
+            // Diago +
+            for(let c=0; c<cols-3; c++) for(let r=0; r<rows-3; r++) {
+                if(b[r][c]===p && b[r+1][c+1]===p && b[r+2][c+2]===p && b[r+3][c+3]===p) return true;
+            }
+            // Diago -
+            for(let c=0; c<cols-3; c++) for(let r=3; r<rows; r++) {
+                if(b[r][c]===p && b[r-1][c+1]===p && b[r-2][c+2]===p && b[r-3][c+3]===p) return true;
+            }
+            return false;
         }
 
         init();
+        setDiff('facile');
     </script>
 </body>
 </html>
