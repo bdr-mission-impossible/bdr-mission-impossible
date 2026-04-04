@@ -99,12 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateStr = document.getElementById('date').value;
             const heureStr = document.getElementById('heure').value;
             const dateHeure = dateStr + " à " + heureStr;
+            const lieu = document.getElementById('lieu').value;
             const message = document.getElementById('message').value;
 
             // Préparation des données pour l'envoi réel
             const formData = new FormData();
             formData.append('nom', nom);
             formData.append('date_heure', dateHeure);
+            formData.append('lieu', lieu);
             formData.append('message', message);
 
             // Envoi réel vers Google Sheets
