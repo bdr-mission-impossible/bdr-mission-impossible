@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Formulaire de mission - Envoi vers Google Sheets
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNqwSTjq5wQhhSivKchbf1MSCBpp1J6w18Q2TtMQTlE3WgDHqMdFQIV1KFYbownuT1Vw/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxORtqwTbB9WLRdThgh0EC-RCGHgsnr8HXS7ykkLMXfYm4XwBUuz2PKvYODs94nS_fQzA/exec";
     
     const form = document.getElementById('mission-form');
     const formStatus = document.getElementById('form-status');
@@ -103,17 +103,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const message = document.getElementById('message').value;
 
             // Préparation des données pour l'envoi réel
-            const formData = new FormData();
-            formData.append('nom', nom);
-            formData.append('date_heure', dateHeure);
-            formData.append('lieu', lieu);
-            formData.append('message', message);
+            const urlParams = new URLSearchParams();
+            urlParams.append('nom', nom);
+            urlParams.append('date_heure', dateHeure);
+            urlParams.append('lieu', lieu);
+            urlParams.append('message', message);
 
             // Envoi réel vers Google Sheets
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors', // Évite les erreurs de sécurité entre domaines (CORS)
-                body: formData
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: urlParams
             })
             .then(() => {
                 // Succès (avec no-cors, la réponse est "opaque" donc ne renvoie pas d'erreur réseau si le message est passé)
