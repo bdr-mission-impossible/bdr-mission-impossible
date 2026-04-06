@@ -103,20 +103,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const message = document.getElementById('message').value;
 
             // Préparation des données pour l'envoi réel
-            const urlParams = new URLSearchParams();
-            urlParams.append('nom', nom);
-            urlParams.append('date_heure', dateHeure);
-            urlParams.append('lieu', lieu);
-            urlParams.append('message', message);
+            const formData = new FormData();
+            formData.append('nom', nom);
+            formData.append('date_heure', dateHeure);
+            formData.append('lieu', lieu);
+            formData.append('message', message);
 
             // Envoi réel vers Google Sheets
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors', // Évite les erreurs de sécurité entre domaines (CORS)
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: urlParams
+                body: formData
             })
             .then(() => {
                 // Succès (avec no-cors, la réponse est "opaque" donc ne renvoie pas d'erreur réseau si le message est passé)
