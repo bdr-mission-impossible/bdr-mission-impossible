@@ -100,7 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const heureStr = document.getElementById('heure').value;
             const dateHeure = dateStr + " à " + heureStr;
             const lieu = document.getElementById('lieu').value;
-            const message = document.getElementById('message').value;
+            const typeRallye = document.getElementById('type-rallye').value;
+            const messageRaw = document.getElementById('message').value;
+            const message = `[${typeRallye}] ${messageRaw}`;
 
             // Préparation des données pour l'envoi réel
             const formData = new FormData();
