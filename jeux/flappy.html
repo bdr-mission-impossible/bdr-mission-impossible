@@ -65,7 +65,7 @@
         };
 
         const pipes = {
-            position: [], width: 50, gap: 130, dx: 2.5,
+            position: [], width: 50, gap: 130, dx: 3.5,
             draw: function() {
                 for(let i=0; i<this.position.length; i++){
                     let p = this.position[i];
@@ -81,7 +81,7 @@
             },
             update: function() {
                 if(state.current !== state.game) return;
-                if(frames % 90 == 0) { this.position.push({ x: canvas.width, y: Math.max(50, Math.random()*(canvas.height - this.gap - 100)) }); }
+                if(frames % 70 == 0) { this.position.push({ x: canvas.width, y: Math.max(50, Math.random()*(canvas.height - this.gap - 100)) }); }
                 for(let i=0; i<this.position.length; i++){
                     let p = this.position[i];
                     

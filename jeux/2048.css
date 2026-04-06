@@ -176,7 +176,7 @@ header {
     justify-content: center;
     align-items: center;
     border-radius: 6px;
-    animation: appear 0.2s;
+    line-height: 1;
 }
 
 @keyframes appear {
